@@ -68,3 +68,24 @@ tupla = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
 
 dicionario = {"chave1": 1, "chave2": 2, "chave3": 3}
 
+dicionario["chave4"] = 4
+
+print(dicionario)
+
+del dicionario["chave4"]
+
+print("chave3" in dicionario)
+print("chave4" in dicionario)
+
+print(dicionario.keys())
+print(dicionario.values())
+
+lanchonete = {"salgado": 4.5, "lanche": 6.5 , "suco": 3.0, "refrigerante": 3.5, "doce": 1.0}
+
+alunos = {"aluno1": 9, "aluno2": 8, "aluno3": 7, "aluno4": 6, "aluno5": 5}
+
+media = 0
+for i in alunos :
+    media += alunos[i]
+    
+print(media)
