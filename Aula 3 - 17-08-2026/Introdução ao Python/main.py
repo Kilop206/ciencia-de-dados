@@ -38,3 +38,12 @@ print(A[3:20])
 
 B = input("Insira uma frase: ")
 print(B.upper().replace(" ", ""))
+
+x = int(input("Primeiro número: "))
+y = int(input("Segundo número: "))
+
+z = ((x ** 2) + (y ** 2)) / ((x - y) ** 2)
+print(z)
+
+salario = float(input("Insira o salário: "))
+print(salario + (salario / 100 * 35))
