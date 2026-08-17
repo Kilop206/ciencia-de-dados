@@ -90,8 +90,8 @@ for i in alunos :
     
 print(media)
 
-nota1 = input("Nota 1: ")
-nota2 = input("Nota 2: ")
+nota1 = float(input("Nota 1: "))
+nota2 = float(input("Nota 2: "))
 
 media = (nota1 + nota2) / 2
 
@@ -100,9 +100,47 @@ if media >= 6 :
 else :
     print("Reprovado!")
 
-if media >= 6 :
+if media > 6 :
     print("Aprovado!")
 elif media < 4:
     print("Reprovado!")
 else :
     print("Exame!")
+
+S = 0
+for i in range(3, 334, 3) :
+    S += i
+print(S)
+
+notas = [1,2,3,4,5,6,7,8,9,10]
+soma = 0
+for i in notas :
+    soma += i
+print(soma / len(notas))
+
+numero = None
+
+while numero not in notas :
+    numero = float(input("Insira um número de 1 a 10: "))
+
+for i in notas :
+    print(numero * i)
+
+def desenhar_linha(tamanho: int) :
+    for i in range(0, tamanho, 1) :
+        print("_", end="")
+
+desenhar_linha(5)
+
+def imprimir_lista(lista) :
+    index = 0
+    for i in lista :
+        print(index, ": ", i)
+        index += 1
+
+imprimir_lista([1,2,3,4,5,6,6,7,8,9,0])
+
+def media_lista(lista: list) :
+    return sum(lista) / len(lista)
+
+print(media_lista([1,32,3,4,5,6,7,8,9,0]))
