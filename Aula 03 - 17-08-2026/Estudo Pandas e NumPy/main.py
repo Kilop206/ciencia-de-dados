@@ -19,3 +19,4 @@ print(df[df["aprovado"]])
 print()
 print(df.sort_values(by="nota", ascending=False))
 print()
+

@@ -89,3 +89,20 @@ for i in alunos :
     media += alunos[i]
     
 print(media)
+
+nota1 = input("Nota 1: ")
+nota2 = input("Nota 2: ")
+
+media = (nota1 + nota2) / 2
+
+if media >= 6 :
+    print("Aprovado!")
+else :
+    print("Reprovado!")
+
+if media >= 6 :
+    print("Aprovado!")
+elif media < 4:
+    print("Reprovado!")
+else :
+    print("Exame!")
