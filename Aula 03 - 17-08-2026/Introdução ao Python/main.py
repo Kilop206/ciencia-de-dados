@@ -47,3 +47,24 @@ print(z)
 
 salario = float(input("Insira o salário: "))
 print(salario + (salario / 100 * 35))
+
+L = [5, 7, 2, 9, 4, 1, 3]
+
+print(len(L))
+print(max(L))
+print(min(L))
+print(sum(L))
+print(sorted(L))
+print(sorted(L, reverse=True))
+
+L1 = range(3, 51, 3)
+print(list(L1))
+
+# Tuplas são imutáveis
+
+tupla = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
+
+# Dicionários
+
+dicionario = {"chave1": 1, "chave2": 2, "chave3": 3}
+
