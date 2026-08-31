@@ -1,5 +1,3 @@
-
-
 producao = [850, 920, 880, 1050, 990]
 
 def producao_diaria(producao) :

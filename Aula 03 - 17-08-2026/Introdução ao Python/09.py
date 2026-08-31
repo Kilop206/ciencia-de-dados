@@ -38,7 +38,7 @@ while (True) :
 2. Listar colaboradores
 3. Pesquisar colaborador pela matrícula
 4. Mostrar quantos colaboradores existem em cada setor
-5. Sair
+0. Sair
 Faça sua escolha: """))
     
     match escolha :
@@ -51,5 +51,5 @@ Faça sua escolha: """))
             pesquisar_colaborador_por_matricula(matricula)
         case 4 :
             colaboradores_por_setor()
-        case 5 : 
+        case 0 : 
             sys.exit(0)

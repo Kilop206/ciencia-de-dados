@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from sqlalchemy import func, select
 
 from .database import get_db
 from .models import Colaborador
@@ -53,6 +54,30 @@ def get_collaborators(
     collaborators = db.scalars(stmt).all()
 
     return collaborators
+
+
+@app.get("/collaborators/count-by-sector")
+def count_collaborators_by_sector(
+    db: Session = Depends(get_db),
+):
+    stmt = (
+        select(
+            Colaborador.setor,
+            func.count(Colaborador.id).label("quantidade"),
+        )
+        .group_by(Colaborador.setor)
+        .order_by(Colaborador.setor)
+    )
+
+    results = db.execute(stmt).all()
+
+    return [
+        {
+            "setor": setor,
+            "quantidade": quantidade,
+        }
+        for setor, quantidade in results
+    ]
 
 
 @app.get(
