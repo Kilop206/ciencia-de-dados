@@ -113,18 +113,3 @@ plt.xticks(rotation=0)
 plt.tight_layout()
 plt.savefig(PASTA_GRAFICOS / '06_preco_medio_corte.png', dpi=180)
 plt.close()
-
-# Resultados textuais para auditoria
-for coluna in numericas:
-    q1, q3 = df[coluna].quantile([.25, .75])
-    iqr = q3 - q1
-    limite_inf, limite_sup = q1 - 1.5 * iqr, q3 + 1.5 * iqr
-    outliers = ((df[coluna] < limite_inf) | (df[coluna] > limite_sup)).sum()
-    print(f'{coluna}: Q1={q1:.2f}; mediana={df[coluna].median():.2f}; Q3={q3:.2f}; IQR={iqr:.2f}; limites=({limite_inf:.2f},{limite_sup:.2f}); outliers={outliers} ({outliers/len(df)*100:.2f}%)')
-
-print('\nCorrelação quilate/preço:', df['quilate'].corr(df['preco']))
-print('Correlação preço/x:', df['preco'].corr(df['x']))
-print('Correlação preço/y:', df['preco'].corr(df['y']))
-print('Correlação preço/z:', df['preco'].corr(df['z']))
-print('Registros com pelo menos uma dimensão x/y/z = 0:', (df[['x', 'y', 'z']] == 0).any(axis=1).sum())
-print('Maior preço:', df.loc[df['preco'].idxmax()].to_dict())
