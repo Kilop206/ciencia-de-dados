@@ -1,0 +1,11 @@
+2.2.1 Qual variável apresenta a maior correlação com o Volume Produzido?
+R: Volume_Produzido
+
+2.2.2 Qual variável tem a menor influência aparente?
+R: Robotica_Atuadores
+
+5.1 Qual dos dois modelos apresentou o melhor desempenho estatístico?
+R: O modelo que apresentou o melhor resultado estatístico foi o de Regressão Linear
+
+5.2 Qual recomendação técnica você daria para aumentar o volume produzido na fábrica com base nos coeficientes/importância das variáveis?
+R: Investir 250 mil em Sensores de Automacao, 45 mil em Robotica de Atuadores e 60 mil em Manutenção Preventiva para ter um retorno de 28 milhões de produtos produzidos

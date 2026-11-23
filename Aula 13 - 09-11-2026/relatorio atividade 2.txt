@@ -1,0 +1,5 @@
+5.1 Qual modelo apresentou maior precisão preditiva (R²) e menor margem de erro (MAE)?
+R: Regressão Linear, com precisão preditiva de 98.57%
+
+5.2 Com base na importância das variáveis (feature importances), quais ações preventivas de manutenção ou controle térmico devem ser priorizadas para reduzir a conta de energia da fábrica?
+R: 

@@ -1,0 +1,165 @@
+name: iiot-grupo3
+services:
+  kafka:
+    image: apache/kafka:4.1.2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9092:9092"
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENERS: "INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_MIN_INSYNC_REPLICAS: "1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    volumes:
+      - kafka_data:/tmp/kraft-combined-logs
+    # O teste consulta o listener INTERNO dentro do proprio container.
+    # Usa kafka-topics.sh para verificar o broker, nao apenas a porta TCP.
+    # Mantem stderr no Docker Health Log para facilitar diagnostico.
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:29092", "--list"]
+      interval: 10s
+      timeout: 25s
+      retries: 15
+      start_period: 90s
+
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      SERVER_SERVLET_CONTEXTPATH: "/"
+      JVM_OPTS: "-Xms64m -Xmx256m"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  influxdb:
+    image: influxdb:2.7
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD:?Defina INFLUXDB_PASSWORD no arquivo .env}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-grupo3}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-industrial}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:?Defina INFLUXDB_TOKEN no arquivo .env}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping", "--host", "http://localhost:8086"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Defina GRAFANA_ADMIN_PASSWORD no arquivo .env}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/industrial.json
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-grupo3}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-industrial}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:?Defina INFLUXDB_TOKEN no arquivo .env}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      influxdb:
+        condition: service_healthy
+
+  iiot-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["uvicorn", "iiot_api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      IIOT_MACHINE_COUNT: ${IIOT_MACHINE_COUNT:-3}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3).read()"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  kafka-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "pipeline.kafka_init"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-iiot.raw.telemetry}
+      KAFKA_DLQ_TOPIC: ${KAFKA_DLQ_TOPIC:-iiot.invalid.telemetry}
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+
+  publisher:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-u", "-m", "pipeline.publisher"]
+    restart: unless-stopped
+    environment:
+      IIOT_API_URL: ${IIOT_API_URL:-http://iiot-api:8000/api/v1/telemetry}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-1}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-iiot.raw.telemetry}
+    depends_on:
+      iiot-api:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-u", "-m", "pipeline.consumer"]
+    restart: unless-stopped
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-iiot.raw.telemetry}
+      KAFKA_DLQ_TOPIC: ${KAFKA_DLQ_TOPIC:-iiot.invalid.telemetry}
+      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID:-iiot-influx-writers}
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:?Defina INFLUXDB_TOKEN no arquivo .env}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-grupo3}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-industrial}
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      influxdb:
+        condition: service_healthy
+
+volumes:
+  kafka_data:
+  influxdb_data:
+  influxdb_config:
+  grafana_data:
