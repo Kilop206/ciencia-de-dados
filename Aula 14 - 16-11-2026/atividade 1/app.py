@@ -21,7 +21,6 @@ def carregar_dados(limite=120):
     if not BANCO_DADOS.exists():
         return pd.DataFrame()
 
-    # Abre o banco em modo somente leitura e fecha a conexão antes de renderizar.
     conn = sqlite3.connect(f"{BANCO_DADOS.as_uri()}?mode=ro", uri=True, timeout=10)
     try:
         tabela = conn.execute('''

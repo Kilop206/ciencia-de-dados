@@ -10,7 +10,6 @@ BANCO_DADOS = Path(__file__).resolve().with_name("qualidade_ar.db")
 
 
 def init_db(conn):
-    # O modo WAL permite que o painel leia enquanto o simulador grava.
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute('''
         CREATE TABLE IF NOT EXISTS leituras_sensores (
@@ -41,7 +40,6 @@ def simular_sensores():
             try:
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                # As três leituras de cada ciclo são gravadas na mesma transação.
                 with conn:
                     for sala_id, dados in salas.items():
                         co2 = round(max(400, dados["co2"] + random.uniform(-22, 22)), 2)
